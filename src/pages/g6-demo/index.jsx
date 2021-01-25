@@ -1,25 +1,28 @@
 import React, { useEffect } from 'react'
 import G6 from '@antv/g6';
+import './registerShape';
+import { surnameArr, nameArr, phoneHeaderArr } from './mock/name';
+import { randomNum } from './utils';
 
-const data = {
+let data = {
   nodes: [
-    { id: 'node0', size: [130, 80], type:'ellipse', },
-    { id: 'node1', size: 20 , type:'diamond',},
-    { id: 'node2', size: 20 , type:'diamond',},
-    { id: 'node3', size: 20 },
+    { id: 'node0', size: [130, 80], type:'ellipse', label:'前端练习生计划' },
+    { id: 'node1', size: [40, 30] , type:'diamond', label: '1班' },
+    { id: 'node2', size: [40, 30] , type:'diamond', label: '2班' },
+    { id: 'node3', size: [40, 30] , type:'diamond', label: '3班' },
     { id: 'node4', size: 20 },
     { id: 'node5', size: 20 },
-    { id: 'node6', size: 10 },
-    { id: 'node7', size: 10 },
-    { id: 'node8', size: 10 },
-    { id: 'node9', size: 10 },
-    { id: 'node10', size: 10 },
-    { id: 'node11', size: 10 },
-    { id: 'node12', size: 10 },
-    { id: 'node13', size: 10 },
-    { id: 'node14', size: 10 },
-    { id: 'node15', size: 10 },
-    { id: 'node16', size: 10 },
+    { id: 'node6', size: 20 },
+    { id: 'node7', size: 20 },
+    { id: 'node8', size: 20 },
+    { id: 'node9', size: 20 },
+    { id: 'node10', size: 20 },
+    { id: 'node11', size: 20 },
+    { id: 'node12', size: 20 },
+    { id: 'node13', size: 20 },
+    { id: 'node14', size: 20 },
+    { id: 'node15', size: 20 },
+    { id: 'node16', size: 20 },
   ],
   edges: [
     { source: 'node0', target: 'node1' },
@@ -41,12 +44,45 @@ const data = {
   ],
 };
 
+const initNodes = (data, MaxNum) => {
+  let nodes = data.nodes;
+  let edges = data.edges;
+
+  if(nodes.length > MaxNum/2) {
+    nodes = [];
+  }
+
+  const result = {nodes:[...nodes],edges:[...edges]};
+  for (let i = 0; i < MaxNum-nodes.length; i++) {
+    if( !result.nodes[i].label &&i < nodes.length) {
+      result.nodes[i] = {
+        ...result.nodes[i],
+        label: `${surnameArr[i % 598]}${nameArr[i % 10]}`,
+      };
+    }
+    else result.nodes.push({
+      id: `node${i}`,
+      size: 20,
+      label: `${surnameArr[i % 598]}${nameArr[i % 10]}`,
+      // phone: `${phoneHeaderArr[i % 5]}${(`${randomNum(10000000, 99999999)}`).slice(0, 8)}`,
+    });
+  }
+  for (let i = edges.length+1; i < MaxNum-nodes.length; i++) {
+    result.edges.push({
+      target: `node${i}`,
+      source: `node${randomNum(1, 3)}`,
+    });
+  }
+  return result;
+};
+
 const Tutorital = () => {
   const ref = React.useRef(null)
   let graph = null
 
   useEffect(() => {
     if(!graph) {
+      data = initNodes(data, 80);  // mock 一定数量的名字
       // 实例化 Minimap
       const minimap = new G6.Minimap()
 
@@ -89,10 +125,16 @@ const Tutorital = () => {
           preventOverlap: true,
           linkDistance: d => {
             if (d.source.id === 'node0') {
-              return 150;
+              return 200;
             }
-            return 30;
+            return 100;
           },
+          onTick: () => {           // 可选
+            console.log('ticking');
+          },
+          onLayoutEnd: () => {      // 可选
+            console.log('force layout done');
+    }
         },
         nodeStateStyles: {
           hover: {
@@ -125,8 +167,12 @@ const Tutorital = () => {
 
       graph.setItemState(evt.item, 'selected', !node.hasState('selected'));
       edges.forEach((edge) => {
+        console.log(edge);
+        console.log(edge._cfg);
+        console.log(edge.source);
+        console.log(edge.source===node.id);
         const model = {
-          type: node.hasState('selected') ? 'my-line-dash' : 'line',
+          type: (node.hasState('selected') && edge.source===node.id) ? 'my-line-dash' : 'line',
           style: {
             lineWidth: 2,
           }
